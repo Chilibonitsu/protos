@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package fileStorage;
+
+option go_package = "imagestorage.v1;imagestorageV1";
+
+// Сервис для управления хранением и обработкой файлов
+service Storage {
+    // Загружает изображение на сервер
+    rpc UploadImage(UploadImageRequest) returns (UploadImageResponse);
+
+    // Скачивает изображение с сервера по его идентификатору
+    rpc DownloadImage(DownloadImageRequest) returns (DownloadImageResponse);
+
+    // Возвращает список всех загруженных изображений
+    rpc ListImages(ListImagesRequest) returns (ListImagesResponse);
+
+    // Удаляет изображение с сервера по его идентификатору
+    rpc DeleteImage(DeleteImageRequest) returns (DeleteImageResponse);
+
+    // Обновляет изображение на сервере (например, заменяет содержимое или имя файла)
+    rpc UpdateImage(UpdateImageRequest) returns (UpdateImageResponse);
+
+    // Возвращает метаданные изображения по его идентификатору
+    rpc GetImageInfo(GetImageInfoRequest) returns (GetImageInfoResponse);
+}
+
+message UploadImageRequest {
+    bytes file_data = 1; 
+    string file_name = 2; 
+}
+
+message UploadImageResponse {
+    string id = 1;          
+    string status = 2;      
+    string error_message = 3; 
+    string mime_type = 4;    
+}
+
+message DownloadImageRequest {
+    string id = 1; 
+}
+
+message DownloadImageResponse {
+    bytes file_data = 1; 
+    string file_name = 2; 
+    string mime_type = 3;
+}
+
+message ListImagesRequest {
+    int32 page = 1;      
+    int32 limit = 2;   
+    string filter_by_name = 3;
+    string filter_by_date = 4; 
+}
+
+message ListImagesResponse {
+    repeated ImageInfo images = 1; 
+    int32 total_count = 2;     
+}
+
+message DeleteImageRequest {
+    string id = 1; 
+}
+
+message DeleteImageResponse {
+    string status = 1;     
+    string error_message = 2;
+}
+
+message UpdateImageRequest {
+    string id = 1;    
+    bytes file_data = 2;   
+    string file_name = 3;  
+}
+
+message UpdateImageResponse {
+    string status = 1;     
+    string error_message = 2; 
+}
+
+message GetImageInfoRequest {
+    string id = 1; 
+}
+
+message GetImageInfoResponse {
+    string file_name = 1;  
+    string create_time = 2; 
+    string update_time = 3; 
+    int64 file_size = 4;    
+}
+
+message ImageInfo {
+    string id = 1;        
+    string file_name = 2;   
+    string create_time = 3;  
+    string update_time = 4;  
+    int64 file_size = 5;     
+}
