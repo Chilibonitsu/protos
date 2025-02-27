@@ -7,7 +7,7 @@ option go_package = "imagestorage.v1;imagestorageV1";
 // Сервис для управления хранением и обработкой файлов
 service Storage {
     // Загружает изображение на сервер
-    rpc UploadImage(UploadImageRequest) returns (UploadImageResponse);
+    rpc UploadImage(stream UploadImageRequest) returns (UploadImageResponse);
 
 
 }

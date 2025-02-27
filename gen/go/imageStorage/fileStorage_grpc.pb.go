@@ -29,7 +29,7 @@ const (
 // Сервис для управления хранением и обработкой файлов
 type StorageClient interface {
 	// Загружает изображение на сервер
-	UploadImage(ctx context.Context, in *UploadImageRequest, opts ...grpc.CallOption) (*UploadImageResponse, error)
+	UploadImage(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadImageRequest, UploadImageResponse], error)
 }
 
 type storageClient struct {
@@ -40,15 +40,18 @@ func NewStorageClient(cc grpc.ClientConnInterface) StorageClient {
 	return &storageClient{cc}
 }
 
-func (c *storageClient) UploadImage(ctx context.Context, in *UploadImageRequest, opts ...grpc.CallOption) (*UploadImageResponse, error) {
+func (c *storageClient) UploadImage(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadImageRequest, UploadImageResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UploadImageResponse)
-	err := c.cc.Invoke(ctx, Storage_UploadImage_FullMethodName, in, out, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &Storage_ServiceDesc.Streams[0], Storage_UploadImage_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &grpc.GenericClientStream[UploadImageRequest, UploadImageResponse]{ClientStream: stream}
+	return x, nil
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Storage_UploadImageClient = grpc.ClientStreamingClient[UploadImageRequest, UploadImageResponse]
 
 // StorageServer is the server API for Storage service.
 // All implementations must embed UnimplementedStorageServer
@@ -57,7 +60,7 @@ func (c *storageClient) UploadImage(ctx context.Context, in *UploadImageRequest,
 // Сервис для управления хранением и обработкой файлов
 type StorageServer interface {
 	// Загружает изображение на сервер
-	UploadImage(context.Context, *UploadImageRequest) (*UploadImageResponse, error)
+	UploadImage(grpc.ClientStreamingServer[UploadImageRequest, UploadImageResponse]) error
 	mustEmbedUnimplementedStorageServer()
 }
 
@@ -68,8 +71,8 @@ type StorageServer interface {
 // pointer dereference when methods are called.
 type UnimplementedStorageServer struct{}
 
-func (UnimplementedStorageServer) UploadImage(context.Context, *UploadImageRequest) (*UploadImageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UploadImage not implemented")
+func (UnimplementedStorageServer) UploadImage(grpc.ClientStreamingServer[UploadImageRequest, UploadImageResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method UploadImage not implemented")
 }
 func (UnimplementedStorageServer) mustEmbedUnimplementedStorageServer() {}
 func (UnimplementedStorageServer) testEmbeddedByValue()                 {}
@@ -92,23 +95,12 @@ func RegisterStorageServer(s grpc.ServiceRegistrar, srv StorageServer) {
 	s.RegisterService(&Storage_ServiceDesc, srv)
 }
 
-func _Storage_UploadImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UploadImageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StorageServer).UploadImage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Storage_UploadImage_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).UploadImage(ctx, req.(*UploadImageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+func _Storage_UploadImage_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(StorageServer).UploadImage(&grpc.GenericServerStream[UploadImageRequest, UploadImageResponse]{ServerStream: stream})
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Storage_UploadImageServer = grpc.ClientStreamingServer[UploadImageRequest, UploadImageResponse]
 
 // Storage_ServiceDesc is the grpc.ServiceDesc for Storage service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -116,12 +108,13 @@ func _Storage_UploadImage_Handler(srv interface{}, ctx context.Context, dec func
 var Storage_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "fileStorage.Storage",
 	HandlerType: (*StorageServer)(nil),
-	Methods: []grpc.MethodDesc{
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "UploadImage",
-			Handler:    _Storage_UploadImage_Handler,
+			StreamName:    "UploadImage",
+			Handler:       _Storage_UploadImage_Handler,
+			ClientStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "imageStorage/fileStorage.proto",
 }
