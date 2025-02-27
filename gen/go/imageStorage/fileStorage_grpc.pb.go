@@ -19,12 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Storage_UploadImage_FullMethodName   = "/fileStorage.Storage/UploadImage"
-	Storage_DownloadImage_FullMethodName = "/fileStorage.Storage/DownloadImage"
-	Storage_ListImages_FullMethodName    = "/fileStorage.Storage/ListImages"
-	Storage_DeleteImage_FullMethodName   = "/fileStorage.Storage/DeleteImage"
-	Storage_UpdateImage_FullMethodName   = "/fileStorage.Storage/UpdateImage"
-	Storage_GetImageInfo_FullMethodName  = "/fileStorage.Storage/GetImageInfo"
+	Storage_UploadImage_FullMethodName = "/fileStorage.Storage/UploadImage"
 )
 
 // StorageClient is the client API for Storage service.
@@ -35,16 +30,6 @@ const (
 type StorageClient interface {
 	// Загружает изображение на сервер
 	UploadImage(ctx context.Context, in *UploadImageRequest, opts ...grpc.CallOption) (*UploadImageResponse, error)
-	// Скачивает изображение с сервера по его идентификатору
-	DownloadImage(ctx context.Context, in *DownloadImageRequest, opts ...grpc.CallOption) (*DownloadImageResponse, error)
-	// Возвращает список всех загруженных изображений
-	ListImages(ctx context.Context, in *ListImagesRequest, opts ...grpc.CallOption) (*ListImagesResponse, error)
-	// Удаляет изображение с сервера по его идентификатору
-	DeleteImage(ctx context.Context, in *DeleteImageRequest, opts ...grpc.CallOption) (*DeleteImageResponse, error)
-	// Обновляет изображение на сервере (например, заменяет содержимое или имя файла)
-	UpdateImage(ctx context.Context, in *UpdateImageRequest, opts ...grpc.CallOption) (*UpdateImageResponse, error)
-	// Возвращает метаданные изображения по его идентификатору
-	GetImageInfo(ctx context.Context, in *GetImageInfoRequest, opts ...grpc.CallOption) (*GetImageInfoResponse, error)
 }
 
 type storageClient struct {
@@ -65,56 +50,6 @@ func (c *storageClient) UploadImage(ctx context.Context, in *UploadImageRequest,
 	return out, nil
 }
 
-func (c *storageClient) DownloadImage(ctx context.Context, in *DownloadImageRequest, opts ...grpc.CallOption) (*DownloadImageResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DownloadImageResponse)
-	err := c.cc.Invoke(ctx, Storage_DownloadImage_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *storageClient) ListImages(ctx context.Context, in *ListImagesRequest, opts ...grpc.CallOption) (*ListImagesResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListImagesResponse)
-	err := c.cc.Invoke(ctx, Storage_ListImages_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *storageClient) DeleteImage(ctx context.Context, in *DeleteImageRequest, opts ...grpc.CallOption) (*DeleteImageResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteImageResponse)
-	err := c.cc.Invoke(ctx, Storage_DeleteImage_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *storageClient) UpdateImage(ctx context.Context, in *UpdateImageRequest, opts ...grpc.CallOption) (*UpdateImageResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateImageResponse)
-	err := c.cc.Invoke(ctx, Storage_UpdateImage_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *storageClient) GetImageInfo(ctx context.Context, in *GetImageInfoRequest, opts ...grpc.CallOption) (*GetImageInfoResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetImageInfoResponse)
-	err := c.cc.Invoke(ctx, Storage_GetImageInfo_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // StorageServer is the server API for Storage service.
 // All implementations must embed UnimplementedStorageServer
 // for forward compatibility.
@@ -123,16 +58,6 @@ func (c *storageClient) GetImageInfo(ctx context.Context, in *GetImageInfoReques
 type StorageServer interface {
 	// Загружает изображение на сервер
 	UploadImage(context.Context, *UploadImageRequest) (*UploadImageResponse, error)
-	// Скачивает изображение с сервера по его идентификатору
-	DownloadImage(context.Context, *DownloadImageRequest) (*DownloadImageResponse, error)
-	// Возвращает список всех загруженных изображений
-	ListImages(context.Context, *ListImagesRequest) (*ListImagesResponse, error)
-	// Удаляет изображение с сервера по его идентификатору
-	DeleteImage(context.Context, *DeleteImageRequest) (*DeleteImageResponse, error)
-	// Обновляет изображение на сервере (например, заменяет содержимое или имя файла)
-	UpdateImage(context.Context, *UpdateImageRequest) (*UpdateImageResponse, error)
-	// Возвращает метаданные изображения по его идентификатору
-	GetImageInfo(context.Context, *GetImageInfoRequest) (*GetImageInfoResponse, error)
 	mustEmbedUnimplementedStorageServer()
 }
 
@@ -145,21 +70,6 @@ type UnimplementedStorageServer struct{}
 
 func (UnimplementedStorageServer) UploadImage(context.Context, *UploadImageRequest) (*UploadImageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UploadImage not implemented")
-}
-func (UnimplementedStorageServer) DownloadImage(context.Context, *DownloadImageRequest) (*DownloadImageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DownloadImage not implemented")
-}
-func (UnimplementedStorageServer) ListImages(context.Context, *ListImagesRequest) (*ListImagesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListImages not implemented")
-}
-func (UnimplementedStorageServer) DeleteImage(context.Context, *DeleteImageRequest) (*DeleteImageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteImage not implemented")
-}
-func (UnimplementedStorageServer) UpdateImage(context.Context, *UpdateImageRequest) (*UpdateImageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateImage not implemented")
-}
-func (UnimplementedStorageServer) GetImageInfo(context.Context, *GetImageInfoRequest) (*GetImageInfoResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetImageInfo not implemented")
 }
 func (UnimplementedStorageServer) mustEmbedUnimplementedStorageServer() {}
 func (UnimplementedStorageServer) testEmbeddedByValue()                 {}
@@ -200,96 +110,6 @@ func _Storage_UploadImage_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Storage_DownloadImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DownloadImageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StorageServer).DownloadImage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Storage_DownloadImage_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).DownloadImage(ctx, req.(*DownloadImageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Storage_ListImages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListImagesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StorageServer).ListImages(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Storage_ListImages_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).ListImages(ctx, req.(*ListImagesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Storage_DeleteImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteImageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StorageServer).DeleteImage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Storage_DeleteImage_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).DeleteImage(ctx, req.(*DeleteImageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Storage_UpdateImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateImageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StorageServer).UpdateImage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Storage_UpdateImage_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).UpdateImage(ctx, req.(*UpdateImageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Storage_GetImageInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetImageInfoRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StorageServer).GetImageInfo(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Storage_GetImageInfo_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).GetImageInfo(ctx, req.(*GetImageInfoRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Storage_ServiceDesc is the grpc.ServiceDesc for Storage service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -300,26 +120,6 @@ var Storage_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UploadImage",
 			Handler:    _Storage_UploadImage_Handler,
-		},
-		{
-			MethodName: "DownloadImage",
-			Handler:    _Storage_DownloadImage_Handler,
-		},
-		{
-			MethodName: "ListImages",
-			Handler:    _Storage_ListImages_Handler,
-		},
-		{
-			MethodName: "DeleteImage",
-			Handler:    _Storage_DeleteImage_Handler,
-		},
-		{
-			MethodName: "UpdateImage",
-			Handler:    _Storage_UpdateImage_Handler,
-		},
-		{
-			MethodName: "GetImageInfo",
-			Handler:    _Storage_GetImageInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
