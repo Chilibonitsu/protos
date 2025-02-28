@@ -2,25 +2,50 @@ syntax = "proto3";
 
 package fileStorage;
 
-option go_package = "imagestorage.v1;imagestorageV1";
+option go_package = "pb/";
 
 // Сервис для управления хранением и обработкой файлов
-service Storage {
+service GuploadService {
     // Загружает изображение на сервер
-    rpc UploadImage(stream UploadImageRequest) returns (UploadImageResponse);
+    rpc Upload(stream ChunkData) returns (UploadResponse);
 
+    // Возвращает список всех загруженных файлов
+    rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
+
+    // Скачивает файл с сервера (стриминг от сервера к клиенту)
+    rpc Download(DownloadRequest) returns (stream ChunkData);
 
 }
 
-message UploadImageRequest {
-    bytes file_data = 1; 
-    string file_name = 2; 
+message ChunkData {
+    string FileName = 1;
+    bytes Content = 2;
 }
 
-message UploadImageResponse {
-    string id = 1;          
-    string status = 2;      
-    string error_message = 3; 
-    string mime_type = 4;    
+enum UploadStatusCode {
+    Unknown = 0;
+    Ok = 1;
+    Failed = 2;
 }
 
+message UploadResponse {
+    string Message = 1;
+    string Id = 2;
+    UploadStatusCode Code = 3;
+}
+
+message ListFilesRequest {}
+
+message ListFilesResponse {
+    repeated FileInfo Files = 1;  
+}
+
+message FileInfo {
+    string FileName = 1;      
+    string CreatedAt = 2;     
+    string UpdatedAt = 3; 
+}
+
+message DownloadRequest {
+    string FileName = 1;  
+}

@@ -4,7 +4,7 @@
 // - protoc             v5.29.3
 // source: imageStorage/fileStorage.proto
 
-package imagestorageV1
+package pb
 
 import (
 	context "context"
@@ -19,101 +19,185 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Storage_UploadImage_FullMethodName = "/fileStorage.Storage/UploadImage"
+	GuploadService_Upload_FullMethodName    = "/fileStorage.GuploadService/Upload"
+	GuploadService_ListFiles_FullMethodName = "/fileStorage.GuploadService/ListFiles"
+	GuploadService_Download_FullMethodName  = "/fileStorage.GuploadService/Download"
 )
 
-// StorageClient is the client API for Storage service.
+// GuploadServiceClient is the client API for GuploadService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // Сервис для управления хранением и обработкой файлов
-type StorageClient interface {
+type GuploadServiceClient interface {
 	// Загружает изображение на сервер
-	UploadImage(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadImageRequest, UploadImageResponse], error)
+	Upload(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ChunkData, UploadResponse], error)
+	// Возвращает список всех загруженных файлов
+	ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error)
+	// Скачивает файл с сервера (стриминг от сервера к клиенту)
+	Download(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ChunkData], error)
 }
 
-type storageClient struct {
+type guploadServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewStorageClient(cc grpc.ClientConnInterface) StorageClient {
-	return &storageClient{cc}
+func NewGuploadServiceClient(cc grpc.ClientConnInterface) GuploadServiceClient {
+	return &guploadServiceClient{cc}
 }
 
-func (c *storageClient) UploadImage(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadImageRequest, UploadImageResponse], error) {
+func (c *guploadServiceClient) Upload(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ChunkData, UploadResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &Storage_ServiceDesc.Streams[0], Storage_UploadImage_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &GuploadService_ServiceDesc.Streams[0], GuploadService_Upload_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[UploadImageRequest, UploadImageResponse]{ClientStream: stream}
+	x := &grpc.GenericClientStream[ChunkData, UploadResponse]{ClientStream: stream}
 	return x, nil
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type Storage_UploadImageClient = grpc.ClientStreamingClient[UploadImageRequest, UploadImageResponse]
+type GuploadService_UploadClient = grpc.ClientStreamingClient[ChunkData, UploadResponse]
 
-// StorageServer is the server API for Storage service.
-// All implementations must embed UnimplementedStorageServer
+func (c *guploadServiceClient) ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFilesResponse)
+	err := c.cc.Invoke(ctx, GuploadService_ListFiles_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *guploadServiceClient) Download(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ChunkData], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &GuploadService_ServiceDesc.Streams[1], GuploadService_Download_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[DownloadRequest, ChunkData]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type GuploadService_DownloadClient = grpc.ServerStreamingClient[ChunkData]
+
+// GuploadServiceServer is the server API for GuploadService service.
+// All implementations must embed UnimplementedGuploadServiceServer
 // for forward compatibility.
 //
 // Сервис для управления хранением и обработкой файлов
-type StorageServer interface {
+type GuploadServiceServer interface {
 	// Загружает изображение на сервер
-	UploadImage(grpc.ClientStreamingServer[UploadImageRequest, UploadImageResponse]) error
-	mustEmbedUnimplementedStorageServer()
+	Upload(grpc.ClientStreamingServer[ChunkData, UploadResponse]) error
+	// Возвращает список всех загруженных файлов
+	ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error)
+	// Скачивает файл с сервера (стриминг от сервера к клиенту)
+	Download(*DownloadRequest, grpc.ServerStreamingServer[ChunkData]) error
+	mustEmbedUnimplementedGuploadServiceServer()
 }
 
-// UnimplementedStorageServer must be embedded to have
+// UnimplementedGuploadServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedStorageServer struct{}
+type UnimplementedGuploadServiceServer struct{}
 
-func (UnimplementedStorageServer) UploadImage(grpc.ClientStreamingServer[UploadImageRequest, UploadImageResponse]) error {
-	return status.Errorf(codes.Unimplemented, "method UploadImage not implemented")
+func (UnimplementedGuploadServiceServer) Upload(grpc.ClientStreamingServer[ChunkData, UploadResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method Upload not implemented")
 }
-func (UnimplementedStorageServer) mustEmbedUnimplementedStorageServer() {}
-func (UnimplementedStorageServer) testEmbeddedByValue()                 {}
+func (UnimplementedGuploadServiceServer) ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListFiles not implemented")
+}
+func (UnimplementedGuploadServiceServer) Download(*DownloadRequest, grpc.ServerStreamingServer[ChunkData]) error {
+	return status.Errorf(codes.Unimplemented, "method Download not implemented")
+}
+func (UnimplementedGuploadServiceServer) mustEmbedUnimplementedGuploadServiceServer() {}
+func (UnimplementedGuploadServiceServer) testEmbeddedByValue()                        {}
 
-// UnsafeStorageServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to StorageServer will
+// UnsafeGuploadServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to GuploadServiceServer will
 // result in compilation errors.
-type UnsafeStorageServer interface {
-	mustEmbedUnimplementedStorageServer()
+type UnsafeGuploadServiceServer interface {
+	mustEmbedUnimplementedGuploadServiceServer()
 }
 
-func RegisterStorageServer(s grpc.ServiceRegistrar, srv StorageServer) {
-	// If the following call pancis, it indicates UnimplementedStorageServer was
+func RegisterGuploadServiceServer(s grpc.ServiceRegistrar, srv GuploadServiceServer) {
+	// If the following call pancis, it indicates UnimplementedGuploadServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&Storage_ServiceDesc, srv)
+	s.RegisterService(&GuploadService_ServiceDesc, srv)
 }
 
-func _Storage_UploadImage_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(StorageServer).UploadImage(&grpc.GenericServerStream[UploadImageRequest, UploadImageResponse]{ServerStream: stream})
+func _GuploadService_Upload_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(GuploadServiceServer).Upload(&grpc.GenericServerStream[ChunkData, UploadResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type Storage_UploadImageServer = grpc.ClientStreamingServer[UploadImageRequest, UploadImageResponse]
+type GuploadService_UploadServer = grpc.ClientStreamingServer[ChunkData, UploadResponse]
 
-// Storage_ServiceDesc is the grpc.ServiceDesc for Storage service.
+func _GuploadService_ListFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFilesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuploadServiceServer).ListFiles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GuploadService_ListFiles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuploadServiceServer).ListFiles(ctx, req.(*ListFilesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GuploadService_Download_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(DownloadRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(GuploadServiceServer).Download(m, &grpc.GenericServerStream[DownloadRequest, ChunkData]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type GuploadService_DownloadServer = grpc.ServerStreamingServer[ChunkData]
+
+// GuploadService_ServiceDesc is the grpc.ServiceDesc for GuploadService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Storage_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "fileStorage.Storage",
-	HandlerType: (*StorageServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+var GuploadService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "fileStorage.GuploadService",
+	HandlerType: (*GuploadServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListFiles",
+			Handler:    _GuploadService_ListFiles_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "UploadImage",
-			Handler:       _Storage_UploadImage_Handler,
+			StreamName:    "Upload",
+			Handler:       _GuploadService_Upload_Handler,
 			ClientStreams: true,
+		},
+		{
+			StreamName:    "Download",
+			Handler:       _GuploadService_Download_Handler,
+			ServerStreams: true,
 		},
 	},
 	Metadata: "imageStorage/fileStorage.proto",
