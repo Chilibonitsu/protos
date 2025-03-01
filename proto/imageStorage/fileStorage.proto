@@ -41,9 +41,10 @@ message ListFilesResponse {
 }
 
 message FileInfo {
-    string FileName = 1;      
-    string CreatedAt = 2;     
-    string UpdatedAt = 3; 
+    string Id= 1;
+    string FileName = 2;      
+    string CreatedAt = 3;     
+    string UpdatedAt = 4; 
 }
 
 message DownloadRequest {
