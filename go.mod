@@ -1,4 +1,4 @@
-module contracts
+module github.com/Chilibonitsu/protos
 
 go 1.24.0
 
