@@ -7,19 +7,14 @@ option go_package = "pb/";
 // Сервис для управления хранением и обработкой файлов
 service GuploadService {
     // Загружает изображение на сервер
-    rpc Upload(stream ChunkData) returns (UploadResponse);
+    rpc Upload(stream UploadFileRequest) returns (UploadResponse);
 
     // Возвращает список всех загруженных файлов
     rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
 
     // Скачивает файл с сервера (стриминг от сервера к клиенту)
-    rpc Download(DownloadRequest) returns (stream ChunkData);
+    rpc Download(DownloadRequest) returns (stream DownloadResponse);
 
-}
-
-message ChunkData {
-    string FileName = 1;
-    bytes Content = 2;
 }
 
 enum UploadStatusCode {
@@ -28,11 +23,23 @@ enum UploadStatusCode {
     Failed = 2;
 }
 
+message UploadFileRequest {
+    oneof Data {
+        FileUploadInfo fileInfo = 1;
+        bytes Content = 2;
+    }
+    
+}
+
+message FileUploadInfo {
+    string FileName = 1;
+}
 message UploadResponse {
     string Message = 1;
     string Id = 2;
     UploadStatusCode Code = 3;
 }
+
 
 message ListFilesRequest {}
 
@@ -49,4 +56,8 @@ message FileInfo {
 
 message DownloadRequest {
     string FileName = 1;  
+}
+
+message DownloadResponse {
+    bytes Content = 1;  
 }

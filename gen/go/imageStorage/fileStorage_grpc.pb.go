@@ -31,11 +31,11 @@ const (
 // Сервис для управления хранением и обработкой файлов
 type GuploadServiceClient interface {
 	// Загружает изображение на сервер
-	Upload(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ChunkData, UploadResponse], error)
+	Upload(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadFileRequest, UploadResponse], error)
 	// Возвращает список всех загруженных файлов
 	ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error)
 	// Скачивает файл с сервера (стриминг от сервера к клиенту)
-	Download(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ChunkData], error)
+	Download(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DownloadResponse], error)
 }
 
 type guploadServiceClient struct {
@@ -46,18 +46,18 @@ func NewGuploadServiceClient(cc grpc.ClientConnInterface) GuploadServiceClient {
 	return &guploadServiceClient{cc}
 }
 
-func (c *guploadServiceClient) Upload(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ChunkData, UploadResponse], error) {
+func (c *guploadServiceClient) Upload(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadFileRequest, UploadResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &GuploadService_ServiceDesc.Streams[0], GuploadService_Upload_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[ChunkData, UploadResponse]{ClientStream: stream}
+	x := &grpc.GenericClientStream[UploadFileRequest, UploadResponse]{ClientStream: stream}
 	return x, nil
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type GuploadService_UploadClient = grpc.ClientStreamingClient[ChunkData, UploadResponse]
+type GuploadService_UploadClient = grpc.ClientStreamingClient[UploadFileRequest, UploadResponse]
 
 func (c *guploadServiceClient) ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -69,13 +69,13 @@ func (c *guploadServiceClient) ListFiles(ctx context.Context, in *ListFilesReque
 	return out, nil
 }
 
-func (c *guploadServiceClient) Download(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ChunkData], error) {
+func (c *guploadServiceClient) Download(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DownloadResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &GuploadService_ServiceDesc.Streams[1], GuploadService_Download_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[DownloadRequest, ChunkData]{ClientStream: stream}
+	x := &grpc.GenericClientStream[DownloadRequest, DownloadResponse]{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (c *guploadServiceClient) Download(ctx context.Context, in *DownloadRequest
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type GuploadService_DownloadClient = grpc.ServerStreamingClient[ChunkData]
+type GuploadService_DownloadClient = grpc.ServerStreamingClient[DownloadResponse]
 
 // GuploadServiceServer is the server API for GuploadService service.
 // All implementations must embed UnimplementedGuploadServiceServer
@@ -95,11 +95,11 @@ type GuploadService_DownloadClient = grpc.ServerStreamingClient[ChunkData]
 // Сервис для управления хранением и обработкой файлов
 type GuploadServiceServer interface {
 	// Загружает изображение на сервер
-	Upload(grpc.ClientStreamingServer[ChunkData, UploadResponse]) error
+	Upload(grpc.ClientStreamingServer[UploadFileRequest, UploadResponse]) error
 	// Возвращает список всех загруженных файлов
 	ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error)
 	// Скачивает файл с сервера (стриминг от сервера к клиенту)
-	Download(*DownloadRequest, grpc.ServerStreamingServer[ChunkData]) error
+	Download(*DownloadRequest, grpc.ServerStreamingServer[DownloadResponse]) error
 	mustEmbedUnimplementedGuploadServiceServer()
 }
 
@@ -110,13 +110,13 @@ type GuploadServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedGuploadServiceServer struct{}
 
-func (UnimplementedGuploadServiceServer) Upload(grpc.ClientStreamingServer[ChunkData, UploadResponse]) error {
+func (UnimplementedGuploadServiceServer) Upload(grpc.ClientStreamingServer[UploadFileRequest, UploadResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method Upload not implemented")
 }
 func (UnimplementedGuploadServiceServer) ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListFiles not implemented")
 }
-func (UnimplementedGuploadServiceServer) Download(*DownloadRequest, grpc.ServerStreamingServer[ChunkData]) error {
+func (UnimplementedGuploadServiceServer) Download(*DownloadRequest, grpc.ServerStreamingServer[DownloadResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method Download not implemented")
 }
 func (UnimplementedGuploadServiceServer) mustEmbedUnimplementedGuploadServiceServer() {}
@@ -141,11 +141,11 @@ func RegisterGuploadServiceServer(s grpc.ServiceRegistrar, srv GuploadServiceSer
 }
 
 func _GuploadService_Upload_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(GuploadServiceServer).Upload(&grpc.GenericServerStream[ChunkData, UploadResponse]{ServerStream: stream})
+	return srv.(GuploadServiceServer).Upload(&grpc.GenericServerStream[UploadFileRequest, UploadResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type GuploadService_UploadServer = grpc.ClientStreamingServer[ChunkData, UploadResponse]
+type GuploadService_UploadServer = grpc.ClientStreamingServer[UploadFileRequest, UploadResponse]
 
 func _GuploadService_ListFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListFilesRequest)
@@ -170,11 +170,11 @@ func _GuploadService_Download_Handler(srv interface{}, stream grpc.ServerStream)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(GuploadServiceServer).Download(m, &grpc.GenericServerStream[DownloadRequest, ChunkData]{ServerStream: stream})
+	return srv.(GuploadServiceServer).Download(m, &grpc.GenericServerStream[DownloadRequest, DownloadResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type GuploadService_DownloadServer = grpc.ServerStreamingServer[ChunkData]
+type GuploadService_DownloadServer = grpc.ServerStreamingServer[DownloadResponse]
 
 // GuploadService_ServiceDesc is the grpc.ServiceDesc for GuploadService service.
 // It's only intended for direct use with grpc.RegisterService,
